@@ -24,10 +24,10 @@ ${data.CONTENT_CN}`
 }
 
 const client = new Client({
-    authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox'],
-    }
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    },
+    authStrategy: new LocalAuth()
 });
 
 client.on('qr', (qr) => {
