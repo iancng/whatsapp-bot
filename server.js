@@ -1,14 +1,13 @@
 import whatsapp_web from 'whatsapp-web.js';
-import qrcode_terimal from 'qrcode-terminal';
-import {CronJob} from 'cron'
+import QRCode from 'qrcode'
+import { CronJob } from 'cron'
 import fetch from 'node-fetch';
 import moment from 'moment';
-import { XMLParser} from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 
-const { Client , LocalAuth } = whatsapp_web;
-const {qrcode} = qrcode_terimal;
+const { Client, LocalAuth } = whatsapp_web;
 
-async function checkTrafficNews(msg){
+async function checkTrafficNews(msg) {
     const response = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
     const parser = new XMLParser();
     const XMLdata = await response.text();
@@ -27,13 +26,15 @@ ${data.CONTENT_CN}`
 const client = new Client({
     authStrategy: new LocalAuth({ clientId: "client-one" }),
     puppeteer: {
-		args: ['--no-sandbox'],
-	}
+        args: ['--no-sandbox'],
+    }
 });
 
 client.on('qr', (qr) => {
     // Generate and scan this code with your phone
-    qrcode.generate(qr, {small: true});
+    QRCode.toString(qr, { type: 'terminal' }, function (err, url) {
+        console.log(url)
+    })
     console.log('QR RECEIVED', qr);
 });
 
@@ -45,7 +46,7 @@ client.on('message', msg => {
     if (msg.body == '!ping') {
         msg.reply('pong');
     }
-    if(msg.body == '!tn'){
+    if (msg.body == '!tn') {
         checkTrafficNews(msg);
     }
 });
