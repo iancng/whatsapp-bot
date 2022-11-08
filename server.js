@@ -25,7 +25,7 @@ ${data.CONTENT_CN}`
 }
 
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({ clientId: "client-one" }),
     puppeteer: {
 		args: ['--no-sandbox'],
 	}
