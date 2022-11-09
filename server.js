@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { XMLParser } from "fast-xml-parser";
 
-const { Client, LocalAuth } = whatsapp_web;
+const { Client, LocalAuth, Util } = whatsapp_web;
 let myID = '85295860339@c.us';
 
 const client = new Client({
@@ -26,10 +26,24 @@ client.on('qr', (qr) => {
 client.on('ready', () => {
     console.log('Client is ready!');
 });
-
 client.on('message', async msg => {
-    if (msg.body == '!help'){
-        msg.reply('Enter the following command:\n!tn - Traffic News\n!ping - Pong\n');
+    console.log(`${msg.from} sent message ${msg.body}`);
+    if (msg.ack.ACK_READ){
+        //nothing is done
+    }
+    else if (msg.body == '!help'){
+        msg.reply(
+            `Enter the following command:
+!tn - Traffic News
+!ping - Pong
+!info - Show Chat Info
+!kickgroup - Kick all members (Require Admin Privilage)
+!promoteall - Promote all members to admin (Require Admin Privilage)
+!demoteall - Demote all members to user (Require Admin Privilage)
+!diu - diu nei
+!reaction - Gives reaction to message
+!sleep - Sleep for 5 seconds`
+            );
     }
     else if (msg.body == '!ping') {
         msg.reply('pong');
@@ -39,7 +53,6 @@ client.on('message', async msg => {
     }
     else if (msg.body == '!info'){
         let chat = await msg.getChat();
-        console.log(chat.id);
         msg.reply(`Chat ID: ${chat.id}\nChat Name:${chat.name}`)
     }
     else if (msg.body == '!kickgroup'){
@@ -73,7 +86,9 @@ client.on('message', async msg => {
             let partIdList = [];
             participants.forEach(participant=>{
                 let partId = participant.id._serialized;
-                partIdList.push(partId);
+                if(!participant.isAdmin){
+                    partIdList.push(partId);
+                }
             })
             groupChat.promoteParticipants(partIdList);
             if(partIdList.length!=0){
@@ -93,7 +108,9 @@ client.on('message', async msg => {
             let partIdList = [];
             participants.forEach(participant=>{
                 let partId = participant.id._serialized;
-                partIdList.push(partId);
+                if(participant.isAdmin){
+                    partIdList.push(partId);
+                }
             })
             groupChat.demoteParticipants(partIdList);
             if(partIdList.length!=0){
@@ -107,10 +124,23 @@ client.on('message', async msg => {
     else if(msg.body == '!diu'){
         msg.reply('diu nei');
     }
+    else if(msg.body == '!reaction'){
+        let quotedMsg = await msg.getQuotedMessage();
+        if(quotedMsg != undefined){
+            quotedMsg.react("💯")
+        }
+        else{
+            msg.react("💯")
+        }
+    }
+    else if (msg.body == "!sleep"){
+        let msgReply = await msg.reply("Sleep for 5 secounds");
+        await wait(5);
+        msgReply.reply("I am awake")
+    }
 });
 
 client.initialize();
-
 
 //All functions are below
 
@@ -130,4 +160,8 @@ async function checkTrafficNews(msg, client) {
 ${data.DIRECTION_CN} ${data.LOCATION_CN}
 ${data.CONTENT_CN}`
     msg.reply(message);
+}
+
+async function wait(seconds){
+    return await new Promise(resolve => setTimeout(resolve, seconds*1000));
 }
