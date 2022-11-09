@@ -122,6 +122,7 @@ client.on('message', async msg => {
         }
     }
     else if(msg.body == '!diu'){
+        msg.react("🖕🏻")
         msg.reply('diu nei');
     }
     else if(msg.body == '!reaction'){
@@ -147,7 +148,6 @@ client.initialize();
 async function checkTrafficNews(msg, client) {
     const info = client.info;
     const messageSentTime = moment().format("YYYY-MM-DD HH:mm");
-    console.log(`${messageSentTime} ${msg.from} sent !tn`);
     const response = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
     const parser = new XMLParser();
     const XMLdata = await response.text();
