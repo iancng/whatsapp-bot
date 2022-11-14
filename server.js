@@ -38,6 +38,7 @@ client.on('message', async msg => {
 !ping - Pong
 !info - Show Chat Info
 !kickgroup - Kick all members (Require Admin Privilage)
+Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
 !promoteall - Promote all members to admin (Require Admin Privilage)
 !demoteall - Demote all members to user (Require Admin Privilage)
 !diu - diu nei
@@ -55,7 +56,7 @@ client.on('message', async msg => {
         let chat = await msg.getChat();
         msg.reply(`Chat ID: ${chat.id}\nChat Name:${chat.name}`)
     }
-    else if (msg.body == '!kickgroup'){
+    else if (msg.body == '!kickgroup' || msg.body == 'Group會重用🙏🏻'){
         let chat = await msg.getChat();
         let groupChat = await client.getChatById(chat.id._serialized);
         let clientId = client.info.wid._serialized;
