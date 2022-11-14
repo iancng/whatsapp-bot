@@ -156,7 +156,7 @@ async function checkTrafficNews(msg, client) {
     const anDate = new Date(data.ANNOUNCEMENT_DATE);
     const dateText = moment(anDate).format("HH:mm")
     const message = `*${data.INCIDENT_STATUS_CN}* ${dateText}
-*${data.INCIDENT_HEADING_CN}*(${data.INCIDENT_DETAIL_CN})
+*${data.INCIDENT_HEADING_CN}* (${data.INCIDENT_DETAIL_CN})
 ${data.DIRECTION_CN} ${data.LOCATION_CN}
 ${data.CONTENT_CN}`
     msg.reply(message);
