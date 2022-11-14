@@ -28,7 +28,7 @@ client.on('ready', () => {
 });
 client.on('message', async msg => {
     console.log(`${msg.from} sent message ${msg.body}`);
-    if (msg.ack.ACK_READ){
+    if (msg.ack.ACK_READ || msg.hasQuotedMsg ){
         //nothing is done
     }
     else if (msg.body == '!help'){
