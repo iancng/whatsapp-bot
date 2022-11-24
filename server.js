@@ -1,9 +1,11 @@
 import whatsapp_web from 'whatsapp-web.js';
-import QRCode from 'qrcode'
-import { CronJob } from 'cron'
+import QRCode from 'qrcode';
+//import { CronJob } from 'cron'
 import fetch from 'node-fetch';
 import moment from 'moment';
 import { XMLParser } from "fast-xml-parser";
+import util from 'util';
+
 
 const { Client, LocalAuth, Util } = whatsapp_web;
 let myID = '85295860339@c.us';
@@ -27,9 +29,19 @@ client.on('ready', () => {
     console.log('Client is ready!');
 });
 client.on('message', async msg => {
+    //log all message in console
     console.log(`${msg.from} sent message ${msg.body}`);
-    if (msg.ack.ACK_READ || msg.hasQuotedMsg ){
+    if (msg.ack == 4){
         //nothing is done
+    }
+    if(msg.hasQuotedMsg){
+        let quotedMsg = await msg.getQuotedMessage();
+        if(quotedMsg.fromMe){
+
+        }
+        else{
+
+        }
     }
     else if (msg.body == '!help'){
         msg.reply(
@@ -39,6 +51,7 @@ client.on('message', async msg => {
 !info - Show Chat Info
 !kickgroup - Kick all members (Require Admin Privilage)
 Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
+!showkickcmd - Show (Group會重用🙏🏻);
 !promoteall - Promote all members to admin (Require Admin Privilage)
 !demoteall - Demote all members to user (Require Admin Privilage)
 !diu - diu nei
@@ -50,11 +63,14 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
         msg.reply('pong');
     }
     else if (msg.body == '!tn') {
-        checkTrafficNews(msg, client);
+        msg.reply(await checkTrafficNews());
     }
     else if (msg.body == '!info'){
         let chat = await msg.getChat();
         msg.reply(`Chat ID: ${chat.id}\nChat Name:${chat.name}`)
+    }
+    else if(msg.body == "!showkickcmd"){
+        msg.reply('Group會重用🙏🏻');
     }
     else if (msg.body == '!kickgroup' || msg.body == 'Group會重用🙏🏻'){
         let chat = await msg.getChat();
@@ -140,14 +156,21 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
         await wait(5);
         msgReply.reply("I am awake")
     }
+    else if(msg.body == "!privateForward"){
+
+    }
+    else if(msg.body == "!getchat"){
+        let allChats = await client.getChats();
+        console.log(allChats);
+
+    }
 });
 
 client.initialize();
 
 //All functions are below
 
-async function checkTrafficNews(msg, client) {
-    const info = client.info;
+async function checkTrafficNews() {
     const messageSentTime = moment().format("YYYY-MM-DD HH:mm");
     const response = await fetch('https://www.td.gov.hk/tc/special_news/trafficnews.xml');
     const parser = new XMLParser();
@@ -160,7 +183,7 @@ async function checkTrafficNews(msg, client) {
 *${data.INCIDENT_HEADING_CN}* (${data.INCIDENT_DETAIL_CN})
 ${data.DIRECTION_CN} ${data.LOCATION_CN}
 ${data.CONTENT_CN}`
-    msg.reply(message);
+    return message;
 }
 
 async function wait(seconds){
