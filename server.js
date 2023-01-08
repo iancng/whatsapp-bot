@@ -52,11 +52,7 @@ client.on('message', async msg => {
 !kickgroup - Kick all members (Require Admin Privilage)
 Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
 !showkickcmd - Show (Group會重用🙏🏻);
-!promoteall - Promote all members to admin (Require Admin Privilage)
-!demoteall - Demote all members to user (Require Admin Privilage)
-!diu - diu nei
-!reaction - Gives reaction to message
-!sleep - Sleep for 5 seconds`
+!promoteall - Promote all members to admin (Require Admin Privilage)`
             );
     }
     else if (msg.body == '!ping') {
@@ -137,24 +133,6 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
         else{
             msg.reply("You must be in group to do so.")
         }
-    }
-    else if(msg.body == '!diu'){
-        msg.react("🖕🏻")
-        msg.reply('diu nei');
-    }
-    else if(msg.body == '!reaction'){
-        let quotedMsg = await msg.getQuotedMessage();
-        if(quotedMsg != undefined){
-            quotedMsg.react("💯")
-        }
-        else{
-            msg.react("💯")
-        }
-    }
-    else if (msg.body == "!sleep"){
-        let msgReply = await msg.reply("Sleep for 5 secounds");
-        await wait(5);
-        msgReply.reply("I am awake")
     }
     else if(msg.body == "!privateForward"){
 
