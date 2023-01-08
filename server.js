@@ -37,7 +37,7 @@ client.on('ready', async () => {
 client.on('message', async msg => {
     //log all message in console
     console.log(`${msg.from} sent message ${msg.body}`);
-    if (msg.ack == 4){
+    if (msg.ack == 4 || (msg.timestamp-moment(new Date()).unix() > 10)){
         //nothing is done
     }
     else if (msg.body == '!help'){
