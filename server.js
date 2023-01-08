@@ -4,11 +4,13 @@ import QRCode from 'qrcode';
 import fetch from 'node-fetch';
 import moment from 'moment';
 import { XMLParser } from "fast-xml-parser";
+import schedule from 'node-schedule';
 import util from 'util';
 
 
 const { Client, LocalAuth, Util } = whatsapp_web;
 let myID = '85295860339@c.us';
+let sharedGroup = '120363038944000073@g.us'
 
 const client = new Client({
     puppeteer: {
@@ -25,23 +27,18 @@ client.on('qr', (qr) => {
     console.log('QR RECEIVED', qr);
 });
 
-client.on('ready', () => {
+client.on('ready', async () => {
+    //CLIENT READY
     console.log('Client is ready!');
+    const job = schedule.scheduleJob('1 0 * * *', function(){
+        groupDailyRefresh();
+    });
 });
 client.on('message', async msg => {
     //log all message in console
     console.log(`${msg.from} sent message ${msg.body}`);
     if (msg.ack == 4){
         //nothing is done
-    }
-    if(msg.hasQuotedMsg){
-        let quotedMsg = await msg.getQuotedMessage();
-        if(quotedMsg.fromMe){
-
-        }
-        else{
-
-        }
     }
     else if (msg.body == '!help'){
         msg.reply(
@@ -52,7 +49,10 @@ client.on('message', async msg => {
 !kickgroup - Kick all members (Require Admin Privilage)
 Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
 !showkickcmd - Show (Group會重用🙏🏻);
-!promoteall - Promote all members to admin (Require Admin Privilage)`
+!promoteall - Promote all members to admin (Require Admin Privilage)
+!groupkick - Kick all members of the shared group
+!echo - Echo
+!duty - Add duty name of shared group`
             );
     }
     else if (msg.body == '!ping') {
@@ -63,90 +63,45 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
     }
     else if (msg.body == '!info'){
         let chat = await msg.getChat();
-        msg.reply(`Chat ID: ${chat.id}\nChat Name:${chat.name}`)
+        msg.reply(`Chat ID: ${chat.id._serialized}\nChat Name:${chat.name}`)
     }
     else if(msg.body == "!showkickcmd"){
         msg.reply('Group會重用🙏🏻');
     }
     else if (msg.body == '!kickgroup' || msg.body == 'Group會重用🙏🏻'){
-        let chat = await msg.getChat();
-        let groupChat = await client.getChatById(chat.id._serialized);
-        let clientId = client.info.wid._serialized;
-        if(chat.isGroup){
-            let participants = groupChat.participants;
-            let listOfRemove = [];
-            participants.forEach(participant => {
-                let partId = participant.id._serialized;
-                if(partId != clientId && partId != myID){
-                    listOfRemove.push(partId);
-                }
-            });
-            groupChat.removeParticipants(listOfRemove);
-            if(listOfRemove.length!=0){
-                msg.reply("Removed " + listOfRemove)
-            }
-        }
-        else{
-            msg.reply('You must be in group to do so.')
-        }
+        kickGroup(await msg.getChat());
     }
     else if (msg.body == '!promoteall'){
-        let chat = await msg.getChat();
-        let groupChat = await client.getChatById(chat.id._serialized);
-        let clientId = client.info.wid._serialized;
-        if(chat.isGroup){
-            let participants = groupChat.participants;
-            let partIdList = [];
-            participants.forEach(participant=>{
-                let partId = participant.id._serialized;
-                if(!participant.isAdmin){
-                    partIdList.push(partId);
-                }
-            })
-            groupChat.promoteParticipants(partIdList);
-            if(partIdList.length!=0){
-                msg.reply("All promoted to admin");
-            }
-        }
-        else{
-            msg.reply("You must be in group to do so.")
-        }
+        promoteGroup(await msg.getChat());
     }
     else if (msg.body == '!demoteall'){
-        let chat = await msg.getChat();
-        let groupChat = await client.getChatById(chat.id._serialized);
-        let clientId = client.info.wid._serialized;
-        if(chat.isGroup){
-            let participants = groupChat.participants;
-            let partIdList = [];
-            participants.forEach(participant=>{
-                let partId = participant.id._serialized;
-                if(participant.isAdmin){
-                    partIdList.push(partId);
-                }
-            })
-            groupChat.demoteParticipants(partIdList);
-            if(partIdList.length!=0){
-                msg.reply("All demoted back to user");
-            }
-        }
-        else{
-            msg.reply("You must be in group to do so.")
-        }
+        demoteGroup(await msg.getChat());
     }
-    else if(msg.body == "!privateForward"){
-
+    else if(msg.body == '!groupkick'){
+        groupDailyRefresh();
     }
-    else if(msg.body == "!getchat"){
-        let allChats = await client.getChats();
-        console.log(allChats);
-
+    else if (msg.body.startsWith('!echo ')) {
+        // Replies with the same message
+        msg.reply(msg.body.slice(6));
+    }
+    else if (msg.body.startsWith('!duty ')) {
+        let chat = await client.getChatById(sharedGroup);
+        const time = moment(new Date()).format("YYYY-MM-DD");
+        let subject = time + msg.body.slice(5);
+        chat.setSubject(subject);
     }
 });
 
 client.initialize();
 
 //All functions are below
+
+async function groupDailyRefresh(){
+    let chat = await client.getChatById(sharedGroup);
+    const time = moment(new Date()).format("YYYY-MM-DD");
+    chat.setSubject(time)
+    kickGroup(chat);
+}
 
 async function checkTrafficNews() {
     const messageSentTime = moment().format("YYYY-MM-DD HH:mm");
@@ -162,6 +117,80 @@ async function checkTrafficNews() {
 ${data.DIRECTION_CN} ${data.LOCATION_CN}
 ${data.CONTENT_CN}`
     return message;
+}
+
+async function checkWeather(){
+    const response = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
+    const data = await response.json();
+    let message = `${data.forecastPeriod}
+${data.forecastDesc}`;
+    return message;
+}
+
+async function kickGroup(chat){
+    let groupChat = await client.getChatById(chat.id._serialized);
+    let clientId = client.info.wid._serialized;
+    if(chat.isGroup){
+        let participants = groupChat.participants;
+        let listOfRemove = [];
+        participants.forEach(participant => {
+            let partId = participant.id._serialized;
+            if(partId != clientId && partId != myID){
+                listOfRemove.push(partId);
+            }
+        });
+        groupChat.removeParticipants(listOfRemove);
+        if(listOfRemove.length!=0){
+            groupChat.sendMessage("Removed " + listOfRemove)
+        }
+    }
+    else{
+        groupChat.sendMessage('You must be in group to do so.')
+    }
+}
+
+async function promoteGroup(chat){
+    let groupChat = await client.getChatById(chat.id._serialized);
+    let clientId = client.info.wid._serialized;
+    if(chat.isGroup){
+        let participants = groupChat.participants;
+        let partIdList = [];
+        participants.forEach(participant=>{
+            let partId = participant.id._serialized;
+            if(!participant.isAdmin){
+                partIdList.push(partId);
+            }
+        })
+        groupChat.promoteParticipants(partIdList);
+        if(partIdList.length!=0){
+            groupChat.sendMessage("All promoted to admin");
+        }
+    }
+    else{
+        groupChat.sendMessage("You must be in group to do so.")
+    }
+}
+
+async function demoteGroup(chat){
+    let groupChat = await client.getChatById(chat.id._serialized);
+    let clientId = client.info.wid._serialized;
+    if(chat.isGroup){
+        let participants = groupChat.participants;
+        let partIdList = [];
+        participants.forEach(participant=>{
+            let partId = participant.id._serialized;
+            if(participant.isAdmin){
+                partIdList.push(partId);
+            }
+        })
+        groupChat.demoteParticipants(partIdList);
+        if(partIdList.length!=0){
+            groupChat.sendMessage("All demoted back to user");
+        }
+    }
+    else{
+        groupChat.sendMessage("You must be in group to do so.")
+    }
 }
 
 async function wait(seconds){
