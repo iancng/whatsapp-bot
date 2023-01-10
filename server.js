@@ -30,7 +30,7 @@ client.on('qr', (qr) => {
 client.on('ready', async () => {
     //CLIENT READY
     console.log('Client is ready!');
-    const job = schedule.scheduleJob('1 16  * * *', function(){
+    const job = schedule.scheduleJob('1 16 * * *', function(){
         groupDailyRefresh();
     });
 });
