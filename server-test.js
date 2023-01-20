@@ -4,6 +4,11 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { XMLParser } from "fast-xml-parser";
 import schedule from 'node-schedule';
+import express from 'express';
+
+
+
+// whatsapp below
 
 const { Client, LocalAuth, Util } = whatsapp_web;
 let myID = '85295860339@c.us';
@@ -27,17 +32,35 @@ client.on('qr', (qr) => {
 client.on('ready', async () => {
     //CLIENT READY
     console.log('Client is ready!');
-    const job = schedule.scheduleJob('1 16 * * *', function(){
+    const job = schedule.scheduleJob('1 16 * * *', function () {
         groupDailyRefresh();
     });
+    //express app
+    const app = express();
+    const port = 3000;
+
+    app.get('/', (req, res) => {
+        res.send('Hello World!')
+    })
+
+    app.post('/message', (req, res) => {
+        let message = req.query.message;
+        client.sendMessage(sharedGroup, message);
+        res.send(`${message} Sent`);
+    })
+
+    app.listen(port, () => {
+        console.log(`Express app listening at http://localhost:${port}`)
+    });
+
 });
 client.on('message', async msg => {
     //log all message in console
     console.log(`${msg.from} sent message ${msg.body}`);
-    if (msg.ack == 4 || (moment(new Date()).unix()-msg.timestamp > 10)){
+    if (msg.ack == 4 || (moment(new Date()).unix() - msg.timestamp > 10)) {
         //nothing is done
     }
-    else if (msg.body == '!help'){
+    else if (msg.body == '!help') {
         msg.reply(
             `Enter the following command:
 !tn - Traffic News
@@ -50,7 +73,7 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
 !groupkick - Kick all members of the shared group
 !echo - Echo
 !duty - Add duty name of shared group`
-            );
+        );
     }
     else if (msg.body == '!ping') {
         msg.reply('pong');
@@ -58,23 +81,23 @@ Group會重用🙏🏻 - Kick all members (Require Admin Privilage)
     else if (msg.body == '!tn') {
         msg.reply(await checkTrafficNews());
     }
-    else if (msg.body == '!info'){
+    else if (msg.body == '!info') {
         let chat = await msg.getChat();
         msg.reply(`Chat ID: ${chat.id._serialized}\nChat Name:${chat.name}`)
     }
-    else if(msg.body == "!showkickcmd"){
+    else if (msg.body == "!showkickcmd") {
         msg.reply('Group會重用🙏🏻');
     }
-    else if (msg.body == '!kickgroup' || msg.body == 'Group會重用🙏🏻'){
+    else if (msg.body == '!kickgroup' || msg.body == 'Group會重用🙏🏻') {
         kickGroup(await msg.getChat());
     }
-    else if (msg.body == '!promoteall'){
+    else if (msg.body == '!promoteall') {
         promoteGroup(await msg.getChat());
     }
-    else if (msg.body == '!demoteall'){
+    else if (msg.body == '!demoteall') {
         demoteGroup(await msg.getChat());
     }
-    else if(msg.body == '!groupkick'){
+    else if (msg.body == '!groupkick') {
         groupDailyRefresh();
     }
     else if (msg.body.startsWith('!echo ')) {
@@ -93,7 +116,7 @@ client.initialize();
 
 //All functions are below
 
-async function groupDailyRefresh(){
+async function groupDailyRefresh() {
     let chat = await client.getChatById(sharedGroup);
     const time = moment(new Date()).format("YYYY-MM-DD");
     chat.setSubject(time).catch(function (error) {
@@ -118,7 +141,7 @@ ${data.CONTENT_CN}`
     return message;
 }
 
-async function checkWeather(){
+async function checkWeather() {
     const response = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc');
     const data = await response.json();
     let message = `${data.forecastPeriod}
@@ -126,83 +149,83 @@ ${data.forecastDesc}`;
     return message;
 }
 
-async function kickGroup(chat){
+async function kickGroup(chat) {
     let groupChat = await client.getChatById(chat.id._serialized);
     let clientId = client.info.wid._serialized;
-    if(chat.isGroup){
+    if (chat.isGroup) {
         let participants = groupChat.participants;
         let listOfRemove = [];
         participants.forEach(participant => {
             let partId = participant.id._serialized;
-            if(partId != clientId && partId != myID){
+            if (partId != clientId && partId != myID) {
                 listOfRemove.push(partId);
             }
         });
-        if(listOfRemove.length!=0){
-            try{
+        if (listOfRemove.length != 0) {
+            try {
                 groupChat.removeParticipants(listOfRemove);
                 groupChat.sendMessage("Removed " + listOfRemove)
             }
-            catch(err){
+            catch (err) {
                 groupChat.sendMessage("Failed to remove " + listOfRemove)
             }
         }
     }
-    else{
+    else {
         groupChat.sendMessage('You must be in group to do so.')
     }
 }
 
-async function promoteGroup(chat){
+async function promoteGroup(chat) {
     let groupChat = await client.getChatById(chat.id._serialized);
     let clientId = client.info.wid._serialized;
-    if(chat.isGroup){
+    if (chat.isGroup) {
         let participants = groupChat.participants;
         let partIdList = [];
-        participants.forEach(participant=>{
+        participants.forEach(participant => {
             let partId = participant.id._serialized;
-            if(!participant.isAdmin){
+            if (!participant.isAdmin) {
                 partIdList.push(partId);
             }
         })
-        if(partIdList.length!=0){
+        if (partIdList.length != 0) {
             groupChat.promoteParticipants(partIdList);
             groupChat.sendMessage("All promoted to admin");
         }
-        else{
+        else {
             groupChat.sendMessage("Everyone is already admin");
         }
     }
-    else{
+    else {
         groupChat.sendMessage("You must be in group to do so.")
     }
 }
 
-async function demoteGroup(chat){
+async function demoteGroup(chat) {
     let groupChat = await client.getChatById(chat.id._serialized);
     let clientId = client.info.wid._serialized;
-    if(chat.isGroup){
+    if (chat.isGroup) {
         let participants = groupChat.participants;
         let partIdList = [];
-        participants.forEach(participant=>{
+        participants.forEach(participant => {
             let partId = participant.id._serialized;
-            if(participant.isAdmin){
+            if (participant.isAdmin) {
                 partIdList.push(partId);
             }
         })
         groupChat.demoteParticipants(partIdList);
-        if(partIdList.length!=0){
+        if (partIdList.length != 0) {
             groupChat.sendMessage("All demoted back to user");
         }
-        else{
+        else {
             groupChat.sendMessage("No admins to demote.");
         }
     }
-    else{
+    else {
         groupChat.sendMessage("You must be in group to do so.")
     }
 }
 
-async function wait(seconds){
-    return await new Promise(resolve => setTimeout(resolve, seconds*1000));
+async function wait(seconds) {
+    return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
