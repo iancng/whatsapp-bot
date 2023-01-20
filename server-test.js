@@ -37,7 +37,7 @@ client.on('ready', async () => {
     });
     //express app
     const app = express();
-    const port = 3000;
+    const port = 3003;
 
     app.get('/', (req, res) => {
         res.send('Hello World!')
