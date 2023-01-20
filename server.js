@@ -98,8 +98,8 @@ client.initialize();
 
 async function groupDailyRefresh(){
     let chat = await client.getChatById(sharedGroup);
-    const time = moment(new Date()).add(8,'hours').format("YYYY-MM-DD");
-    chat.setSubject(time)
+    const time = moment(new Date()).format("YYYY-MM-DD");
+    chat.setSubject(time);
     kickGroup(chat);
 }
 
