@@ -99,7 +99,9 @@ client.initialize();
 async function groupDailyRefresh(){
     let chat = await client.getChatById(sharedGroup);
     const time = moment(new Date()).format("YYYY-MM-DD");
-    chat.setSubject(time);
+    chat.setSubject(time).catch(function (error) {
+        console.error(error);
+    });
     kickGroup(chat);
 }
 
@@ -139,9 +141,14 @@ async function kickGroup(chat){
                 listOfRemove.push(partId);
             }
         });
-        groupChat.removeParticipants(listOfRemove);
         if(listOfRemove.length!=0){
-            groupChat.sendMessage("Removed " + listOfRemove)
+            try{
+                groupChat.removeParticipants(listOfRemove);
+                groupChat.sendMessage("Removed " + listOfRemove)
+            }
+            catch(err){
+                groupChat.sendMessage("Failed to remove " + listOfRemove)
+            }
         }
     }
     else{
@@ -161,9 +168,12 @@ async function promoteGroup(chat){
                 partIdList.push(partId);
             }
         })
-        groupChat.promoteParticipants(partIdList);
         if(partIdList.length!=0){
+            groupChat.promoteParticipants(partIdList);
             groupChat.sendMessage("All promoted to admin");
+        }
+        else{
+            groupChat.sendMessage("Everyone is already admin");
         }
     }
     else{
@@ -186,6 +196,9 @@ async function demoteGroup(chat){
         groupChat.demoteParticipants(partIdList);
         if(partIdList.length!=0){
             groupChat.sendMessage("All demoted back to user");
+        }
+        else{
+            groupChat.sendMessage("No admins to demote.");
         }
     }
     else{
