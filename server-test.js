@@ -7,7 +7,6 @@ import schedule from 'node-schedule';
 import express from 'express';
 
 
-
 // whatsapp below
 
 const { Client, LocalAuth, Util } = whatsapp_web;
@@ -37,6 +36,7 @@ client.on('ready', async () => {
     });
     //express app
     const app = express();
+    app.use(express.json())
     const port = 3003;
 
     app.get('/', (req, res) => {
@@ -44,7 +44,7 @@ client.on('ready', async () => {
     })
 
     app.post('/message', (req, res) => {
-        let message = req.query.message;
+        let message = req.body.message;
         client.sendMessage(sharedGroup, message);
         res.send(`${message} Sent`);
     })
