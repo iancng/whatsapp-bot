@@ -31,9 +31,18 @@ client.on('qr', (qr) => {
 client.on('ready', async () => {
     //CLIENT READY
     console.log('Client is ready!');
-    const job = schedule.scheduleJob('1 16 * * *', function () {
+
+    //crontab
+    let rule = new schedule.RecurrenceRule();
+    rule.tz = 'Asia/Hong_Kong';
+    rule.second = 0;
+    rule.minute = 1;
+    rule.hour = 0;
+    // schedule
+    schedule.scheduleJob(rule, function () {
         groupDailyRefresh();
     });
+
     //express app
     const app = express();
     app.use(express.json())
