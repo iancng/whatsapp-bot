@@ -6,7 +6,7 @@ import { XMLParser } from "fast-xml-parser";
 import schedule from 'node-schedule';
 import express from 'express';
 
-
+console.log("Start")
 // whatsapp below
 
 const { Client, LocalAuth, Util } = whatsapp_web;
